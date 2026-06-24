@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DC資産ナビ">
+<title>DC資産ナビ</title>
+<style>
+  :root {
+    --blue: #1a6ef5;
+    --blue-dark: #1455c0;
+    --blue-light: #e8f0fe;
+    --green: #22c55e;
+    --red: #ef4444;
+    --gray-bg: #f4f6fb;
+    --gray-border: #e2e8f0;
+    --gray-text: #64748b;
+    --white: #ffffff;
+    --text: #1e293b;
+    --card-shadow: 0 2px 12px rgba(26,110,245,0.08);
+    --radius: 16px;
+    --tab-h: 64px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+    background: var(--gray-bg);
+    color: var(--text);
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    padding-bottom: var(--tab-h);
+  }
+
+  /* ヘッダー */
+  .header {
+    background: linear-gradient(135deg, #1a6ef5 0%, #0f4cbf 100%);
+    padding: 52px 20px 24px;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .header-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .header-title span { font-size: 22px; }
+  .header-date { font-size: 12px; opacity: 0.8; }
+  .bell-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+  /* メインコンテンツ */
+  .main { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* カード共通 */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--card-shadow);
+  }
+  .card-title { font-size: 12px; color: var(--gray-text); font-weight: 600; letter-spacing: 0.05em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+
+  /* 評価額カード */
+  .total-card { background: linear-gradient(135deg, #1a6ef5 0%, #0f4cbf 100%); color: white; }
+  .total-label { font-size: 12px; opacity: 0.85; margin-bottom: 6px; }
+  .total-amount { font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+  .total-amount span { font-size: 20px; }
+  .total-diff { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
+  .total-diff .arrow { font-size: 18px; }
+  .total-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .total-item { background: rgba(255,255,255,0.15); border-radius: 10px; padding: 10px; }
+  .total-item-label { font-size: 11px; opacity: 0.8; margin-bottom: 4px; }
+  .total-item-val { font-size: 17px; font-weight: 700; }
+  .total-item-val.green { color: #86efac; }
+  .total-item-val.small { font-size: 14px; }
+
+  /* 商品内訳 */
+  .product-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--gray-border); gap: 10px; }
+  .product-row:last-child { border-bottom: none; }
+  .product-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .product-name { flex: 1; font-size: 12px; color: var(--text); line-height: 1.4; }
+  .product-pct { font-size: 11px; color: var(--gray-text); margin-top: 2px; }
+  .product-right { text-align: right; flex-shrink: 0; }
+  .product-amount { font-size: 13px; font-weight: 700; }
+  .product-gain { font-size: 11px; font-weight: 600; }
+  .gain-plus { color: var(--green); }
+  .gain-minus { color: var(--red); }
+
+  /* ドーナツチャート */
+  .donut-wrap { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+  .donut-canvas-wrap { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+  .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+  .donut-center-label { font-size: 9px; color: var(--gray-text); }
+  .donut-center-val { font-size: 13px; font-weight: 800; color: var(--text); }
+  .donut-legend { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* グラフ */
+  .chart-wrap { height: 160px; position: relative; }
+  .chart-period-btns { display: flex; gap: 6px; margin-bottom: 10px; }
+  .period-btn { flex: 1; padding: 6px; border: 1px solid var(--gray-border); border-radius: 8px; background: white; font-size: 11px; color: var(--gray-text); cursor: pointer; text-align: center; transition: all 0.2s; }
+  .period-btn.active { background: var(--blue); color: white; border-color: var(--blue); font-weight: 600; }
+
+  /* シミュレーション */
+  .sim-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .sim-label { font-size: 12px; color: var(--gray-text); width: 90px; flex-shrink: 0; }
+  .sim-val { font-size: 14px; font-weight: 700; flex: 1; }
+  .sim-input { flex: 1; border: 1px solid var(--gray-border); border-radius: 8px; padding: 8px 10px; font-size: 14px; font-family: inherit; color: var(--text); }
+  .sim-input:focus { outline: none; border-color: var(--blue); }
+  .rate-btns { display: flex; gap: 6px; flex: 1; }
+  .rate-btn { flex: 1; padding: 7px; border: 1px solid var(--gray-border); border-radius: 8px; background: white; font-size: 12px; cursor: pointer; text-align: center; transition: all 0.2s; }
+  .rate-btn.active { background: var(--blue); color: white; border-color: var(--blue); font-weight: 700; }
+  .sim-result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .sim-result-item { background: var(--blue-light); border-radius: 12px; padding: 12px 8px; text-align: center; }
+  .sim-result-item.highlight { background: linear-gradient(135deg, #1a6ef5, #0f4cbf); color: white; }
+  .sim-result-label { font-size: 10px; color: var(--gray-text); margin-bottom: 6px; }
+  .sim-result-item.highlight .sim-result-label { color: rgba(255,255,255,0.8); }
+  .sim-result-amount { font-size: 15px; font-weight: 800; color: var(--blue); }
+  .sim-result-item.highlight .sim-result-amount { color: white; font-size: 17px; }
+  .sim-calc-btn { width: 100%; padding: 14px; background: var(--blue); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 12px; }
+
+  /* データ入力 */
+  .input-section { display: flex; flex-direction: column; gap: 14px; }
+  .input-card { background: white; border-radius: var(--radius); padding: 18px; box-shadow: var(--card-shadow); }
+  .input-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .input-title .icon { font-size: 18px; }
+  .field-label { font-size: 12px; color: var(--gray-text); margin-bottom: 6px; font-weight: 500; }
+  .field-input { width: 100%; border: 1.5px solid var(--gray-border); border-radius: 10px; padding: 12px; font-size: 16px; font-family: inherit; color: var(--text); transition: border-color 0.2s; margin-bottom: 12px; }
+  .field-input:focus { outline: none; border-color: var(--blue); }
+  .field-note { font-size: 11px; color: var(--gray-text); margin-top: -8px; margin-bottom: 12px; }
+  .save-btn { width: 100%; padding: 14px; background: var(--blue); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .save-btn:active { background: var(--blue-dark); }
+
+  /* AI読み取り */
+  .ai-upload-area { border: 2px dashed var(--blue); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; background: var(--blue-light); transition: all 0.2s; margin-bottom: 12px; }
+  .ai-upload-area:active { background: #d0e4fd; }
+  .ai-upload-icon { font-size: 36px; margin-bottom: 8px; }
+  .ai-upload-text { font-size: 13px; color: var(--blue); font-weight: 600; }
+  .ai-upload-sub { font-size: 11px; color: var(--gray-text); margin-top: 4px; }
+  #imageInput { display: none; }
+  .preview-img { width: 100%; border-radius: 10px; margin-bottom: 10px; display: none; }
+  .ai-result { background: var(--gray-bg); border-radius: 10px; padding: 12px; margin-bottom: 10px; display: none; }
+  .ai-result-title { font-size: 12px; color: var(--gray-text); margin-bottom: 8px; font-weight: 600; }
+  .ai-result-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--gray-border); font-size: 13px; }
+  .ai-result-row:last-child { border-bottom: none; }
+  .ai-result-val { font-weight: 700; color: var(--blue); }
+  .ai-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .ai-analyze-btn { background: #7c3aed; color: white; margin-bottom: 8px; }
+  .ai-save-btn { background: var(--green); color: white; display: none; }
+  .loading { display: none; text-align: center; padding: 20px; }
+  .spinner { width: 36px; height: 36px; border: 4px solid var(--blue-light); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 10px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--gray-text); }
+
+  /* 設定 */
+  .settings-section { display: flex; flex-direction: column; gap: 14px; }
+  .settings-card { background: white; border-radius: var(--radius); padding: 18px; box-shadow: var(--card-shadow); }
+  .settings-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .setting-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gray-border); gap: 12px; }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-icon { font-size: 20px; }
+  .setting-info { flex: 1; }
+  .setting-name { font-size: 14px; font-weight: 500; }
+  .setting-desc { font-size: 11px; color: var(--gray-text); margin-top: 2px; }
+  .setting-val { font-size: 13px; color: var(--blue); font-weight: 700; }
+  .setting-input { border: 1.5px solid var(--gray-border); border-radius: 8px; padding: 7px 10px; font-size: 14px; width: 90px; text-align: right; font-family: inherit; }
+  .setting-input:focus { outline: none; border-color: var(--blue); }
+  .settings-save-btn { width: 100%; padding: 14px; background: var(--blue); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+
+  /* タブバー */
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    background: white;
+    border-top: 1px solid var(--gray-border);
+    display: flex;
+    height: var(--tab-h);
+    z-index: 200;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; border: none; background: none; padding: 0; }
+  .tab-icon { font-size: 22px; transition: transform 0.15s; }
+  .tab-label { font-size: 10px; color: var(--gray-text); font-weight: 500; }
+  .tab-item.active .tab-icon { transform: scale(1.1); }
+  .tab-item.active .tab-label { color: var(--blue); font-weight: 700; }
+
+  /* ページ */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* トースト */
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1e293b; color: white; padding: 12px 20px; border-radius: 24px; font-size: 13px; font-weight: 600; opacity: 0; transition: all 0.3s; z-index: 300; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* 履歴 */
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  .history-item { background: var(--gray-bg); border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .history-date { font-size: 12px; color: var(--gray-text); }
+  .history-amount { font-size: 15px; font-weight: 700; }
+  .history-diff { font-size: 11px; font-weight: 600; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--gray-text); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; }
+
+  /* APIキー入力 */
+  .api-key-notice { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+  .api-key-notice-title { font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .api-key-notice-text { font-size: 12px; color: #78350f; line-height: 1.6; }
+  .api-key-input { width: 100%; border: 1.5px solid var(--gray-border); border-radius: 10px; padding: 12px; font-size: 13px; font-family: monospace; margin-bottom: 8px; }
+  .api-key-input:focus { outline: none; border-color: var(--blue); }
+  .api-key-save-btn { width: 100%; padding: 12px; background: var(--blue); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-title"><span>📈</span> DC資産ナビ</div>
+    <button class="bell-btn" onclick="showToast('通知はまだ設定されていません')">🔔</button>
+  </div>
+  <div class="header-date" id="headerDate"></div>
+</div>
+
+<!-- ホーム -->
+<div class="page active" id="page-home">
+<div class="main">
+
+  <!-- 評価額カード -->
+  <div class="card total-card">
+    <div class="total-label">現在評価額</div>
+    <div class="total-amount" id="totalAmount"><span>¥</span>－－－</div>
+    <div class="total-diff" id="totalDiff" style="opacity:0.7">前日比 データなし</div>
+    <div class="total-grid">
+      <div class="total-item">
+        <div class="total-item-label">積立元本</div>
+        <div class="total-item-val small" id="totalCost">－－</div>
+      </div>
+      <div class="total-item">
+        <div class="total-item-label">運用益</div>
+        <div class="total-item-val green" id="totalGain">－－</div>
+      </div>
+      <div class="total-item">
+        <div class="total-item-label">利回り（年率）</div>
+        <div class="total-item-val small" id="totalYield">－－</div>
+      </div>
+      <div class="total-item">
+        <div class="total-item-label">評価損益率</div>
+        <div class="total-item-val green" id="totalGainPct">－－</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 資産推移グラフ -->
+  <div class="card">
+    <div class="card-title">📊 資産推移</div>
+    <div class="chart-period-btns">
+      <button class="period-btn active" onclick="selectPeriod(this,'1m')">1ヶ月</button>
+      <button class="period-btn" onclick="selectPeriod(this,'3m')">3ヶ月</button>
+      <button class="period-btn" onclick="selectPeriod(this,'6m')">6ヶ月</button>
+      <button class="period-btn" onclick="selectPeriod(this,'1y')">1年</button>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+  <!-- 商品内訳 -->
+  <div class="card">
+    <div class="card-title">🥧 商品別内訳</div>
+    <div class="donut-wrap">
+      <div class="donut-canvas-wrap">
+        <canvas id="donutChart" width="100" height="100"></canvas>
+        <div class="donut-center">
+          <div class="donut-center-label">合計</div>
+          <div class="donut-center-val" id="donutTotal">－</div>
+        </div>
+      </div>
+      <div class="donut-legend" id="donutLegend"></div>
+    </div>
+    <div id="productList"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- 内訳（詳細） -->
+<div class="page" id="page-detail">
+<div class="main">
+  <div class="card">
+    <div class="card-title">📋 保有商品一覧</div>
+    <div id="detailProductList"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🕐 入力履歴</div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+</div>
+
+<!-- シミュレーション -->
+<div class="page" id="page-sim">
+<div class="main">
+  <div class="card">
+    <div class="card-title">🔮 将来シミュレーション</div>
+    <div class="sim-row">
+      <div class="sim-label">現在の年齢</div>
+      <input class="sim-input" type="number" id="simAge" placeholder="46" style="max-width:80px">
+      <div style="font-size:13px;color:var(--gray-text)">歳</div>
+    </div>
+    <div class="sim-row">
+      <div class="sim-label">目標年齢</div>
+      <input class="sim-input" type="number" id="simTargetAge" placeholder="65" style="max-width:80px">
+      <div style="font-size:13px;color:var(--gray-text)">歳</div>
+    </div>
+    <div class="sim-row">
+      <div class="sim-label">毎月の掛金</div>
+      <input class="sim-input" type="number" id="simMonthly" placeholder="30000" style="max-width:120px">
+      <div style="font-size:13px;color:var(--gray-text)">円</div>
+    </div>
+    <div class="sim-row">
+      <div class="sim-label">利回り想定</div>
+      <div class="rate-btns">
+        <button class="rate-btn" onclick="setRate(this,3)">3%</button>
+        <button class="rate-btn active" onclick="setRate(this,5)">5%</button>
+        <button class="rate-btn" onclick="setRate(this,7)">7%</button>
+        <button class="rate-btn" onclick="setRate(this,10)">10%</button>
+      </div>
+    </div>
+    <button class="sim-calc-btn" onclick="calcSim()">シミュレーション実行</button>
+  </div>
+  <div class="card" id="simResultCard" style="display:none">
+    <div class="card-title">📈 シミュレーション結果</div>
+    <div id="simResultText" style="font-size:13px;color:var(--gray-text);margin-bottom:12px;line-height:1.8;"></div>
+    <div class="sim-result-grid" id="simResultGrid"></div>
+    <div class="chart-wrap" style="margin-top:14px;height:180px">
+      <canvas id="simChart"></canvas>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- データ入力 -->
+<div class="page" id="page-input">
+<div class="input-section main">
+
+  <!-- AI読み取り -->
+  <div class="input-card">
+    <div class="input-title"><span class="icon">🤖</span>AIスクショ読み取り</div>
+
+    <div class="api-key-notice" id="apiKeyNotice">
+      <div class="api-key-notice-title">⚠️ APIキーが必要です</div>
+      <div class="api-key-notice-text">AI読み取りにはAnthropicのAPIキーが必要です。<br>下に入力して保存してください（端末に保存されます）</div>
+    </div>
+    <div id="apiKeySection">
+      <label class="field-label">Anthropic APIキー</label>
+      <input class="api-key-input" type="password" id="apiKeyInput" placeholder="sk-ant-...">
+      <button class="api-key-save-btn" onclick="saveApiKey()">保存する</button>
+    </div>
+
+    <div style="margin-top:14px">
+      <label for="imageInput">
+        <div class="ai-upload-area" id="uploadArea">
+          <div class="ai-upload-icon">📷</div>
+          <div class="ai-upload-text">スクショをタップして選択</div>
+          <div class="ai-upload-sub">JIS&Tなどの残高画面を撮影してください</div>
+        </div>
+      </label>
+      <input type="file" id="imageInput" accept="image/*" onchange="handleImageSelect(event)">
+      <img class="preview-img" id="previewImg">
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">AIが画像を解析中...</div>
+      </div>
+      <div class="ai-result" id="aiResult">
+        <div class="ai-result-title">🔍 読み取り結果</div>
+        <div id="aiResultRows"></div>
+      </div>
+      <button class="ai-btn ai-analyze-btn" id="analyzeBtn" onclick="analyzeImage()" style="display:none">🤖 AIで解析する</button>
+      <button class="ai-btn ai-save-btn" id="aiSaveBtn" onclick="saveAiResult()">✅ この内容で保存</button>
+    </div>
+  </div>
+
+  <!-- 手動入力 -->
+  <div class="input-card">
+    <div class="input-title"><span class="icon">✏️</span>手動入力</div>
+    <label class="field-label">評価額合計（円）</label>
+    <input class="field-input" type="number" id="manualTotal" placeholder="2845320">
+    <label class="field-label">積立元本（円）</label>
+    <input class="field-input" type="number" id="manualCost" placeholder="1850000">
+    <div class="field-note">※ 不明な場合は空欄でOK</div>
+    <label class="field-label">前日比（円）※省略可</label>
+    <input class="field-input" type="number" id="manualDiff" placeholder="12540">
+
+    <div style="font-size:13px;font-weight:700;margin-bottom:12px;margin-top:4px">商品別内訳（任意）</div>
+    <div id="productInputs">
+      <div class="product-input-row" style="margin-bottom:10px">
+        <input class="field-input" type="text" placeholder="商品名（例：eMAXIS Slim 米国株式）" style="margin-bottom:6px">
+        <input class="field-input" type="number" placeholder="評価額（円）">
+      </div>
+    </div>
+    <button onclick="addProductRow()" style="background:none;border:1.5px dashed var(--blue);color:var(--blue);border-radius:10px;padding:10px;width:100%;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px">＋ 商品を追加</button>
+    <button class="save-btn" onclick="saveManual()">💾 保存する</button>
+  </div>
+
+</div>
+</div>
+
+<!-- 設定 -->
+<div class="page" id="page-settings">
+<div class="settings-section main">
+  <div class="settings-card">
+    <div class="settings-title">⚙️ 基本設定</div>
+    <div class="setting-row">
+      <div class="setting-icon">🎯</div>
+      <div class="setting-info">
+        <div class="setting-name">目標金額</div>
+        <div class="setting-desc">老後の目標資産額</div>
+      </div>
+      <input class="setting-input" type="number" id="setGoal" placeholder="20000000">
+      <div style="font-size:11px;color:var(--gray-text)">円</div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-icon">📅</div>
+      <div class="setting-info">
+        <div class="setting-name">目標年齢</div>
+        <div class="setting-desc">受取開始予定年齢</div>
+      </div>
+      <input class="setting-input" type="number" id="setTargetAge" placeholder="65">
+      <div style="font-size:11px;color:var(--gray-text)">歳</div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-icon">👤</div>
+      <div class="setting-info">
+        <div class="setting-name">現在の年齢</div>
+        <div class="setting-desc"></div>
+      </div>
+      <input class="setting-input" type="number" id="setAge" placeholder="46">
+      <div style="font-size:11px;color:var(--gray-text)">歳</div>
+    </div>
+    <div class="setting-row">
+      <div class="setting-icon">💰</div>
+      <div class="setting-info">
+        <div class="setting-name">毎月の掛金</div>
+        <div class="setting-desc"></div>
+      </div>
+      <input class="setting-input" type="number" id="setMonthly" placeholder="30000">
+      <div style="font-size:11px;color:var(--gray-text)">円</div>
+    </div>
+  </div>
+  <button class="settings-save-btn" onclick="saveSettings()">設定を保存</button>
+
+  <div class="settings-card">
+    <div class="settings-title">ℹ️ アプリ情報</div>
+    <div class="setting-row">
+      <div class="setting-info"><div class="setting-name">バージョン</div></div>
+      <div class="setting-val">1.0.0</div>
+    </div>
+    <div class="setting-row" onclick="clearAllData()" style="cursor:pointer">
+      <div class="setting-icon">🗑️</div>
+      <div class="setting-info"><div class="setting-name" style="color:#ef4444">全データをリセット</div></div>
+      <div style="color:var(--gray-text);font-size:18px">›</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- タブバー -->
+<nav class="tab-bar">
+  <button class="tab-item active" onclick="showPage('home',this)">
+    <div class="tab-icon">🏠</div>
+    <div class="tab-label">ホーム</div>
+  </button>
+  <button class="tab-item" onclick="showPage('detail',this)">
+    <div class="tab-icon">📋</div>
+    <div class="tab-label">内訳</div>
+  </button>
+  <button class="tab-item" onclick="showPage('sim',this)">
+    <div class="tab-icon">🔮</div>
+    <div class="tab-label">シミュ</div>
+  </button>
+  <button class="tab-item" onclick="showPage('input',this)">
+    <div class="tab-icon">➕</div>
+    <div class="tab-label">入力</div>
+  </button>
+  <button class="tab-item" onclick="showPage('settings',this)">
+    <div class="tab-icon">⚙️</div>
+    <div class="tab-label">設定</div>
+  </button>
+</nav>
+
+<!-- トースト -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== ストレージ ==========
+const STORAGE_KEYS = { history:'dc_history', settings:'dc_settings', apiKey:'dc_apikey', products:'dc_products' };
+
+function load(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || null; } catch { return null; }
+}
+function save(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.error(e); }
+}
+
+// ========== 状態 ==========
+let settings = load(STORAGE_KEYS.settings) || { goal:20000000, targetAge:65, age:46, monthly:30000 };
+let history = load(STORAGE_KEYS.history) || [];
+let products = load(STORAGE_KEYS.products) || [];
+let selectedRate = 5;
+let currentPeriod = '1m';
+let aiParsedData = null;
+let trendChartInstance = null;
+let simChartInstance = null;
+
+// ========== 初期化 ==========
+window.addEventListener('DOMContentLoaded', () => {
+  updateHeaderDate();
+  updateHomeScreen();
+  updateSettingsForm();
+  checkApiKey();
+  setInterval(updateHeaderDate, 60000);
+});
+
+function updateHeaderDate() {
+  const now = new Date();
+  const days = ['日','月','火','水','木','金','土'];
+  document.getElementById('headerDate').textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${days[now.getDay()]}）時点`;
+}
+
+// ========== ページ切替 ==========
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'detail') renderDetailPage();
+  if (name === 'home') updateHomeScreen();
+}
+
+// ========== ホーム画面更新 ==========
+function updateHomeScreen() {
+  const latest = history[history.length - 1];
+  const prev = history[history.length - 2];
+
+  if (!latest) {
+    renderEmptyChart();
+    renderDonut([]);
+    renderProductList([]);
+    return;
+  }
+
+  const total = latest.total;
+  const cost = latest.cost || 0;
+  const gain = cost ? total - cost : 0;
+  const gainPct = cost ? ((gain / cost) * 100).toFixed(1) : '－';
+  const diff = prev ? total - prev.total : (latest.diff || 0);
+  const diffPct = prev ? ((diff / prev.total) * 100).toFixed(2) : '';
+
+  document.getElementById('totalAmount').innerHTML = `<span>¥</span>${fmt(total)}`;
+  const diffEl = document.getElementById('totalDiff');
+  if (diff !== 0 || latest.diff) {
+    const sign = diff >= 0 ? '+' : '';
+    const arrow = diff >= 0 ? '↑' : '↓';
+    diffEl.innerHTML = `前日比 <span style="color:${diff>=0?'#86efac':'#fca5a5'}">${sign}${fmt(diff)}円 (${sign}${diffPct}%) ${arrow}</span>`;
+    diffEl.style.opacity = '1';
+  }
+  document.getElementById('totalCost').textContent = cost ? `¥${fmt(cost)}` : '不明';
+  document.getElementById('totalGain').textContent = cost ? `+¥${fmt(gain)}` : '－';
+  document.getElementById('totalYield').textContent = settings.age && settings.targetAge ? calcYield()+'%' : '－';
+  document.getElementById('totalGainPct').textContent = gainPct !== '－' ? `+${gainPct}%` : '－';
+
+  renderTrendChart();
+  const prods = latest.products && latest.products.length ? latest.products : products;
+  renderDonut(prods);
+  renderProductList(prods);
+}
+
+function calcYield() {
+  if (history.length < 2) return '－';
+  const first = history[0];
+  const last = history[history.length-1];
+  const years = (new Date(last.date) - new Date(first.date)) / (365*24*3600*1000);
+  if (years < 0.1) return '－';
+  const r = Math.pow(last.total / first.total, 1/years) - 1;
+  return (r*100).toFixed(1);
+}
+
+function fmt(n) {
+  return Math.round(n).toLocaleString('ja-JP');
+}
+
+// ========== トレンドチャート ==========
+function selectPeriod(btn, period) {
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentPeriod = period;
+  renderTrendChart();
+}
+
+function filterByPeriod(data, period) {
+  if (!data.length) return data;
+  const last = new Date(data[data.length-1].date);
+  const ms = { '1m':30, '3m':90, '6m':180, '1y':365 };
+  const cutoff = new Date(last.getTime() - ms[period]*24*3600*1000);
+  return data.filter(d => new Date(d.date) >= cutoff);
+}
+
+function renderTrendChart() {
+  const canvas = document.getElementById('trendChart');
+  const ctx = canvas.getContext('2d');
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth || 340;
+  canvas.height = 160;
+
+  const filtered = filterByPeriod(history, currentPeriod);
+  if (filtered.length < 2) {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('データが2件以上になると表示されます', canvas.width/2, 80);
+    return;
+  }
+
+  const vals = filtered.map(d => d.total);
+  const min = Math.min(...vals) * 0.98;
+  const max = Math.max(...vals) * 1.02;
+  const W = canvas.width, H = canvas.height;
+  const padL = 54, padR = 12, padT = 10, padB = 28;
+
+  ctx.clearRect(0,0,W,H);
+
+  // グリッド
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineWidth = 1;
+  for (let i=0; i<=3; i++) {
+    const y = padT + (H-padT-padB) * (1-i/3);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    const val = min + (max-min)*(i/3);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(fmtShort(val), padL-4, y+3);
+  }
+
+  // ライン & グラデーション塗り
+  const pts = filtered.map((d,i) => ({
+    x: padL + (W-padL-padR)*(i/(filtered.length-1)),
+    y: padT + (H-padT-padB)*(1-(d.total-min)/(max-min))
+  }));
+
+  const grad = ctx.createLinearGradient(0,padT,0,H-padB);
+  grad.addColorStop(0,'rgba(26,110,245,0.25)');
+  grad.addColorStop(1,'rgba(26,110,245,0)');
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, H-padB);
+  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length-1].x, H-padB);
+  ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#1a6ef5'; ctx.lineWidth = 2.5;
+  pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+  ctx.stroke();
+
+  // X軸ラベル
+  ctx.fillStyle = '#94a3b8'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(filtered.length/4));
+  filtered.forEach((d,i) => {
+    if (i % step === 0 || i === filtered.length-1) {
+      const dt = new Date(d.date);
+      ctx.fillText(`${dt.getMonth()+1}/${dt.getDate()}`, pts[i].x, H-padB+14);
+    }
+  });
+}
+
+function fmtShort(n) {
+  if (n >= 1e8) return (n/1e8).toFixed(1)+'億';
+  if (n >= 1e4) return (n/1e4).toFixed(0)+'万';
+  return Math.round(n).toString();
+}
+
+function renderEmptyChart() {
+  const canvas = document.getElementById('trendChart');
+  const ctx = canvas.getContext('2d');
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth || 340;
+  canvas.height = 160;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '13px -apple-system,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('データを入力するとグラフが表示されます', canvas.width/2, 80);
+}
+
+// ========== ドーナツチャート ==========
+const COLORS = ['#1a6ef5','#22c55e','#f59e0b','#ec4899','#8b5cf6','#06b6d4'];
+
+function renderDonut(prods) {
+  const canvas = document.getElementById('donutChart');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 100; canvas.height = 100;
+  const latest = history[history.length-1];
+  const total = latest ? latest.total : 0;
+
+  document.getElementById('donutTotal').textContent = total ? fmtShort(total) : '－';
+
+  if (!prods.length || !total) {
+    ctx.clearRect(0,0,100,100);
+    ctx.beginPath();
+    ctx.arc(50,50,38,0,Math.PI*2);
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 14; ctx.stroke();
+    document.getElementById('donutLegend').innerHTML = '<div style="font-size:11px;color:var(--gray-text)">商品データなし</div>';
+    return;
+  }
+
+  let angle = -Math.PI/2;
+  const sum = prods.reduce((a,p) => a + p.amount, 0);
+  prods.forEach((p,i) => {
+    const slice = (p.amount / sum) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(50,50,38,angle,angle+slice);
+    ctx.strokeStyle = COLORS[i%COLORS.length];
+    ctx.lineWidth = 14; ctx.stroke();
+    angle += slice;
+  });
+
+  const legend = document.getElementById('donutLegend');
+  legend.innerHTML = prods.slice(0,4).map((p,i) => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${COLORS[i%COLORS.length]}"></div>
+      <div style="flex:1;font-size:10px;line-height:1.3">${p.name.length>14?p.name.slice(0,14)+'…':p.name}</div>
+      <div style="font-size:10px;font-weight:700">${((p.amount/sum)*100).toFixed(0)}%</div>
+    </div>`).join('');
+}
+
+function renderProductList(prods) {
+  const el = document.getElementById('productList');
+  if (!prods.length) { el.innerHTML = '<div style="font-size:12px;color:var(--gray-text);text-align:center;padding:10px">商品データなし</div>'; return; }
+  const sum = prods.reduce((a,p) => a+p.amount, 0);
+  el.innerHTML = prods.map((p,i) => `
+    <div class="product-row">
+      <div class="product-dot" style="background:${COLORS[i%COLORS.length]}"></div>
+      <div class="product-name">${p.name}<br><span class="product-pct">${((p.amount/sum)*100).toFixed(1)}%</span></div>
+      <div class="product-right">
+        <div class="product-amount">¥${fmt(p.amount)}</div>
+        ${p.gain ? `<div class="product-gain gain-plus">+¥${fmt(p.gain)}</div>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+// ========== 内訳ページ ==========
+function renderDetailPage() {
+  const latest = history[history.length-1];
+  const prods = (latest && latest.products && latest.products.length) ? latest.products : products;
+  const det = document.getElementById('detailProductList');
+  if (!prods.length) {
+    det.innerHTML = '<div style="font-size:12px;color:var(--gray-text);text-align:center;padding:20px">商品データなし</div>';
+  } else {
+    const sum = prods.reduce((a,p) => a+p.amount, 0);
+    det.innerHTML = prods.map((p,i) => `
+      <div class="product-row">
+        <div class="product-dot" style="background:${COLORS[i%COLORS.length]}"></div>
+        <div class="product-name">${p.name}<div class="product-pct">${((p.amount/sum)*100).toFixed(1)}%</div></div>
+        <div class="product-right">
+          <div class="product-amount">¥${fmt(p.amount)}</div>
+          ${p.gain ? `<div class="product-gain gain-plus">+¥${fmt(p.gain)}</div>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  const hl = document.getElementById('historyList');
+  if (!history.length) {
+    hl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">まだデータがありません<br>「入力」から記録しましょう</div></div>';
+  } else {
+    const sorted = [...history].reverse();
+    hl.innerHTML = sorted.map((h,i) => {
+      const prev = sorted[i+1];
+      const diff = prev ? h.total - prev.total : (h.diff||0);
+      const sign = diff >= 0 ? '+' : '';
+      return `<div class="history-item">
+        <div>
+          <div class="history-date">${h.date}</div>
+          <div class="history-amount">¥${fmt(h.total)}</div>
+        </div>
+        <div style="text-align:right">
+          ${diff!==0?`<div class="history-diff ${diff>=0?'gain-plus':'gain-minus'}">${sign}¥${fmt(Math.abs(diff))}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ========== シミュレーション ==========
+function setRate(btn, rate) {
+  document.querySelectorAll('.rate-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedRate = rate;
+}
+
+function calcSim() {
+  const age = parseInt(document.getElementById('simAge').value) || settings.age || 46;
+  const targetAge = parseInt(document.getElementById('simTargetAge').value) || settings.targetAge || 65;
+  const monthly = parseInt(document.getElementById('simMonthly').value) || settings.monthly || 30000;
+  const rate = selectedRate / 100;
+  const years = targetAge - age;
+  const latest = history[history.length-1];
+  const currentAsset = latest ? latest.total : 0;
+  const monthlyRate = rate / 12;
+  const months = years * 12;
+
+  // FV計算（現在資産の将来価値 + 積立の将来価値）
+  const fvCurrent = currentAsset * Math.pow(1+rate, years);
+  const fvMonthly = monthly * ((Math.pow(1+monthlyRate, months)-1) / monthlyRate);
+  const total = fvCurrent + fvMonthly;
+  const totalCost = currentAsset + monthly * months;
+  const totalGain = total - totalCost;
+
+  const card = document.getElementById('simResultCard');
+  card.style.display = 'block';
+
+  document.getElementById('simResultText').innerHTML =
+    `現在 <b>${age}歳</b> → 目標 <b>${targetAge}歳</b>（${years}年後）<br>` +
+    `毎月 <b>¥${fmt(monthly)}</b>積立 × 利回り <b>${selectedRate}%</b> で試算`;
+
+  const grid = document.getElementById('simResultGrid');
+  grid.innerHTML = `
+    <div class="sim-result-item">
+      <div class="sim-result-label">元本合計</div>
+      <div class="sim-result-amount" style="font-size:13px">¥${fmtShort(totalCost)}</div>
+    </div>
+    <div class="sim-result-item highlight">
+      <div class="sim-result-label">予想資産額</div>
+      <div class="sim-result-amount">約¥${fmtShort(total)}</div>
+    </div>
+    <div class="sim-result-item">
+      <div class="sim-result-label">運用益</div>
+      <div class="sim-result-amount" style="font-size:13px;color:#22c55e">+¥${fmtShort(totalGain)}</div>
+    </div>`;
+
+  // シミュレーショングラフ
+  renderSimChart(age, targetAge, years, monthly, rate, currentAsset);
+  card.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function renderSimChart(age, targetAge, years, monthly, rate, currentAsset) {
+  const canvas = document.getElementById('simChart');
+  const ctx = canvas.getContext('2d');
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth || 340;
+  canvas.height = 180;
+
+  const monthlyRate = rate/12;
+  const dataPoints = [];
+  for (let y=0; y<=years; y++) {
+    const fv = currentAsset * Math.pow(1+rate,y) + monthly*12*y * (1 + rate/2);
+    const fv2 = currentAsset * Math.pow(1+rate,y) + monthly * ((Math.pow(1+monthlyRate,y*12)-1)/monthlyRate);
+    dataPoints.push({ age: age+y, val: fv2, cost: currentAsset + monthly*12*y });
+  }
+
+  const vals = dataPoints.map(d => d.val);
+  const costs = dataPoints.map(d => d.cost);
+  const maxV = Math.max(...vals)*1.05;
+  const minV = 0;
+  const W = canvas.width, H = canvas.height;
+  const padL = 54, padR = 12, padT = 10, padB = 28;
+
+  ctx.clearRect(0,0,W,H);
+
+  // グリッド
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+  for (let i=0;i<=3;i++) {
+    const y = padT + (H-padT-padB)*(1-i/3);
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    ctx.fillStyle = '#94a3b8'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(fmtShort(maxV*(i/3)), padL-4, y+3);
+  }
+
+  const toXY = (i, val) => ({
+    x: padL + (W-padL-padR)*(i/(dataPoints.length-1)),
+    y: padT + (H-padT-padB)*(1-(val-minV)/(maxV-minV))
+  });
+
+  // 元本エリア
+  const grad2 = ctx.createLinearGradient(0,padT,0,H-padB);
+  grad2.addColorStop(0,'rgba(34,197,94,0.2)');
+  grad2.addColorStop(1,'rgba(34,197,94,0.05)');
+  ctx.beginPath();
+  ctx.moveTo(toXY(0,costs[0]).x, H-padB);
+  costs.forEach((c,i) => ctx.lineTo(toXY(i,c).x, toXY(i,c).y));
+  ctx.lineTo(toXY(costs.length-1,costs[costs.length-1]).x, H-padB);
+  ctx.fillStyle = grad2; ctx.fill();
+
+  // 運用後エリア
+  const grad = ctx.createLinearGradient(0,padT,0,H-padB);
+  grad.addColorStop(0,'rgba(26,110,245,0.3)');
+  grad.addColorStop(1,'rgba(26,110,245,0)');
+  ctx.beginPath();
+  ctx.moveTo(toXY(0,vals[0]).x, H-padB);
+  vals.forEach((v,i) => ctx.lineTo(toXY(i,v).x, toXY(i,v).y));
+  ctx.lineTo(toXY(vals.length-1,vals[vals.length-1]).x, H-padB);
+  ctx.fillStyle = grad; ctx.fill();
+
+  // ライン（予想）
+  ctx.beginPath(); ctx.strokeStyle = '#1a6ef5'; ctx.lineWidth = 2.5;
+  vals.forEach((v,i) => i===0 ? ctx.moveTo(toXY(i,v).x,toXY(i,v).y) : ctx.lineTo(toXY(i,v).x,toXY(i,v).y));
+  ctx.stroke();
+
+  // X軸ラベル
+  ctx.fillStyle = '#94a3b8'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+  const step = Math.max(1,Math.floor(dataPoints.length/4));
+  dataPoints.forEach((d,i) => {
+    if (i%step===0 || i===dataPoints.length-1) {
+      ctx.fillText(d.age+'歳', toXY(i,vals[i]).x, H-padB+14);
+    }
+  });
+}
+
+// ========== AI解析 ==========
+function checkApiKey() {
+  const key = localStorage.getItem(STORAGE_KEYS.apiKey);
+  if (key) {
+    document.getElementById('apiKeyNotice').style.display = 'none';
+    document.getElementById('apiKeySection').style.display = 'none';
+  }
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-ant-')) { showToast('APIキーが正しくありません'); return; }
+  localStorage.setItem(STORAGE_KEYS.apiKey, key);
+  document.getElementById('apiKeyNotice').style.display = 'none';
+  document.getElementById('apiKeySection').style.display = 'none';
+  showToast('APIキーを保存しました ✅');
+}
+
+function handleImageSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = document.getElementById('previewImg');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+    document.getElementById('analyzeBtn').style.display = 'block';
+    document.getElementById('aiResult').style.display = 'none';
+    document.getElementById('aiSaveBtn').style.display = 'none';
+    aiParsedData = null;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeImage() {
+  const apiKey = localStorage.getItem(STORAGE_KEYS.apiKey);
+  if (!apiKey) { showToast('APIキーを設定してください'); return; }
+  const img = document.getElementById('previewImg');
+  if (!img.src) { showToast('画像を選択してください'); return; }
+
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('analyzeBtn').style.display = 'none';
+  document.getElementById('aiResult').style.display = 'none';
+
+  try {
+    const base64 = img.src.split(',')[1];
+    const mediaType = img.src.split(';')[0].split(':')[1];
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: `この画像はDC（確定拠出年金）の残高画面です。以下の情報をJSON形式のみで返してください（説明文不要）：
+{
+  "total": 数値（評価額合計、円）,
+  "cost": 数値（積立元本、不明なら0）,
+  "diff": 数値（前日比、不明なら0）,
+  "products": [
+    {"name": "商品名", "amount": 数値, "gain": 数値（評価損益、不明なら0）}
+  ]
+}
+数値はカンマなしの整数で。` }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content[0].text;
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    aiParsedData = parsed;
+
+    // 結果表示
+    const rows = document.getElementById('aiResultRows');
+    let html = `<div class="ai-result-row"><span>評価額合計</span><span class="ai-result-val">¥${fmt(parsed.total)}</span></div>`;
+    if (parsed.cost) html += `<div class="ai-result-row"><span>積立元本</span><span class="ai-result-val">¥${fmt(parsed.cost)}</span></div>`;
+    if (parsed.diff) html += `<div class="ai-result-row"><span>前日比</span><span class="ai-result-val">${parsed.diff>0?'+':''}¥${fmt(parsed.diff)}</span></div>`;
+    if (parsed.products && parsed.products.length) {
+      parsed.products.forEach(p => {
+        html += `<div class="ai-result-row"><span>${p.name}</span><span class="ai-result-val">¥${fmt(p.amount)}</span></div>`;
+      });
+    }
+    rows.innerHTML = html;
+    document.getElementById('aiResult').style.display = 'block';
+    document.getElementById('aiSaveBtn').style.display = 'block';
+  } catch(e) {
+    showToast('解析エラー: ' + (e.message || '不明'));
+    document.getElementById('analyzeBtn').style.display = 'block';
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
+function saveAiResult() {
+  if (!aiParsedData) return;
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
+  const entry = {
+    date: dateStr,
+    total: aiParsedData.total,
+    cost: aiParsedData.cost || 0,
+    diff: aiParsedData.diff || 0,
+    products: aiParsedData.products || []
+  };
+  history.push(entry);
+  save(STORAGE_KEYS.history, history);
+  if (entry.products.length) {
+    products = entry.products;
+    save(STORAGE_KEYS.products, products);
+  }
+  showToast('保存しました ✅');
+  document.getElementById('previewImg').style.display = 'none';
+  document.getElementById('aiResult').style.display = 'none';
+  document.getElementById('aiSaveBtn').style.display = 'none';
+  aiParsedData = null;
+  document.getElementById('imageInput').value = '';
+}
+
+// ========== 手動入力 ==========
+function addProductRow() {
+  const container = document.getElementById('productInputs');
+  const row = document.createElement('div');
+  row.className = 'product-input-row';
+  row.style.marginBottom = '10px';
+  row.innerHTML = `<input class="field-input" type="text" placeholder="商品名" style="margin-bottom:6px"><input class="field-input" type="number" placeholder="評価額（円）">`;
+  container.appendChild(row);
+}
+
+function saveManual() {
+  const total = parseInt(document.getElementById('manualTotal').value);
+  if (!total) { showToast('評価額を入力してください'); return; }
+  const cost = parseInt(document.getElementById('manualCost').value) || 0;
+  const diff = parseInt(document.getElementById('manualDiff').value) || 0;
+
+  const productRows = document.querySelectorAll('.product-input-row');
+  const prods = [];
+  productRows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const name = inputs[0].value.trim();
+    const amount = parseInt(inputs[1].value);
+    if (name && amount) prods.push({name, amount, gain: 0});
+  });
+
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
+  history.push({ date:dateStr, total, cost, diff, products:prods });
+  save(STORAGE_KEYS.history, history);
+  if (prods.length) { products = prods; save(STORAGE_KEYS.products, products); }
+
+  document.getElementById('manualTotal').value = '';
+  document.getElementById('manualCost').value = '';
+  document.getElementById('manualDiff').value = '';
+  document.getElementById('productInputs').innerHTML = `<div class="product-input-row" style="margin-bottom:10px"><input class="field-input" type="text" placeholder="商品名（例：eMAXIS Slim 米国株式）" style="margin-bottom:6px"><input class="field-input" type="number" placeholder="評価額（円）"></div>`;
+
+  showToast('保存しました ✅');
+  updateHomeScreen();
+}
+
+// ========== 設定 ==========
+function updateSettingsForm() {
+  document.getElementById('setGoal').value = settings.goal || '';
+  document.getElementById('setTargetAge').value = settings.targetAge || '';
+  document.getElementById('setAge').value = settings.age || '';
+  document.getElementById('setMonthly').value = settings.monthly || '';
+  // シミュ初期値
+  document.getElementById('simAge').value = settings.age || '';
+  document.getElementById('simTargetAge').value = settings.targetAge || '';
+  document.getElementById('simMonthly').value = settings.monthly || '';
+}
+
+function saveSettings() {
+  settings.goal = parseInt(document.getElementById('setGoal').value) || 20000000;
+  settings.targetAge = parseInt(document.getElementById('setTargetAge').value) || 65;
+  settings.age = parseInt(document.getElementById('setAge').value) || 46;
+  settings.monthly = parseInt(document.getElementById('setMonthly').value) || 30000;
+  save(STORAGE_KEYS.settings, settings);
+  updateSettingsForm();
+  showToast('設定を保存しました ✅');
+}
+
+function clearAllData() {
+  if (!confirm('全てのデータを削除しますか？')) return;
+  localStorage.clear();
+  history = []; products = [];
+  settings = { goal:20000000, targetAge:65, age:46, monthly:30000 };
+  updateHomeScreen();
+  updateSettingsForm();
+  showToast('データをリセットしました');
+}
+
+// ========== トースト ==========
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
